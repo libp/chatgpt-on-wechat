@@ -1,4 +1,6 @@
+import json
 import logging, traceback, sys, threading
+import time
 try:
     import Queue
 except ImportError:
@@ -7,6 +9,7 @@ except ImportError:
 from ..log import set_logging
 from ..utils import test_connect
 from ..storage import templates
+from .. import config
 
 logger = logging.getLogger('itchat')
 
@@ -15,6 +18,28 @@ def load_register(core):
     core.configured_reply = configured_reply
     core.msg_register     = msg_register
     core.run              = run
+    core.accept_friend       = accept_friend
+
+def accept_friend(self, userName, v4='', autoUpdate=True):
+    url = f"{self.loginInfo['url']}/webwxverifyuser?r={int(time.time())}&pass_ticket={self.loginInfo['pass_ticket']}"
+    data = {
+        'BaseRequest': self.loginInfo['BaseRequest'],
+        'Opcode': 3,  # 3
+        'VerifyUserListSize': 1,
+        'VerifyUserList': [{
+            'Value': userName,
+            'VerifyUserTicket': v4, }],
+        'VerifyContent': '',
+        'SceneListCount': 1,
+        'SceneList': [33],
+        'skey': self.loginInfo['skey'], }
+    headers = {
+        'ContentType': 'application/json; charset=UTF-8',
+        'User-Agent': config.USER_AGENT}
+    r = self.s.post(url, headers=headers,
+                    data=json.dumps(data, ensure_ascii=False).encode('utf8', 'replace'))
+    if autoUpdate:
+        self.update_friend(userName)
 
 def auto_login(self, hotReload=False, statusStorageDir='itchat.pkl',
         enableCmdQR=False, picDir=None, qrCallback=None,
@@ -86,6 +111,7 @@ def msg_register(self, msgType, isFriendChat=False, isGroupChat=False, isMpChat=
 
 def run(self, debug=False, blockThread=True):
     logger.info('Start auto replying.')
+
     if debug:
         set_logging(loggingLevel=logging.DEBUG)
     def reply_fn():

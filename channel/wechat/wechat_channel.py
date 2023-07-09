@@ -47,6 +47,12 @@ def handler_group_msg(msg):
     WechatChannel().handle_group(cmsg)
     return None
 
+# @itchat.msg_register(itchat.content.FRIENDS)
+# def accept_friend(msg):
+#     # 接受好友请求
+#     # itchat.accept_friend(**msg['Text'])
+#     # # 发送欢迎消息
+#     # itchat.send_msg('Nice to meet you!', msg['RecommendInfo']['UserName'])
 
 def _check(func):
     def wrapper(self, cmsg: ChatMessage):
@@ -112,7 +118,7 @@ class WechatChannel(ChatChannel):
         itchat.instance.receivingRetryCount = 600  # 修改断线超时时间
         # login by scan QRCode
         hotReload = conf().get("hot_reload", False)
-        status_path = os.path.join(get_appdata_dir(), "itchat.pkl")
+        status_path = os.path.join(get_appdata_dir(), "user_datas.pkl")
         itchat.auto_login(
             enableCmdQR=2,
             hotReload=hotReload,
